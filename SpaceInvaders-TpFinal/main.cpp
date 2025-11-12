@@ -25,19 +25,32 @@ class Nave {
 	int dir; 
 	clock_t tempo;
 	clock_t paso;
+	bool vivo;
 public:
 	Nave() {
-		x = (LIM_IZQ + LIM_DER) / 2;
-		y = LIM_INF - 1;
+		x = 0;
+		y = 0;
 		dir = 0;
 		paso = CLOCKS_PER_SEC / 30;  
 		tempo = clock();
+		vivo = true;
 	}
 	
 	int getX() { return x; }
 	int getY() { return y; }
+	int getDir() {return dir; }
+	int getState() {return vivo; }
+	clock_t getTempo() {return tempo; }
+	clock_t getPaso() {return paso; }
+
+	void setX(int _x) {x = _x;}
+	void setY(int _y) {y = _y;}
+	void setDir(int _dir) {dir = _dir;}
+	void setState(bool _vivo) {vivo = _vivo;}
+	void setTempo(clock_t _tempo) {tempo = _tempo;}
+	void setPaso(clock_t _paso) {paso = _paso;}
 	
-	void dibujar() {
+	virtual void dibujar() {
 		textcolor(RED);
 		gotoxy(x, y);
 		cout << "[^]";
@@ -47,30 +60,57 @@ public:
 		cout << "   ";
 	}
 	
+
+};
+
+class Jugador : public Nave{
+	
+public:
+	Jugador(){
+		setX((LIM_IZQ + LIM_DER) / 2);
+		setY(LIM_INF - 1);
+	}
 	void procesarTecla(int tecla) {
 		switch (tecla) {
-		case 75: dir = -1; break; 
-		case 77: dir = 1; break;  
+		case 75: 
+		case 'a':
+		case 'A':
+			setDir(-1); break; 
+		case 77:
+		case 'd':
+		case 'D':
+			setDir(1); break;  
 		}
 	}
 	
 	void actualizarMovimiento() {
-		if (tempo + paso < clock()) {  
-			if (dir == -1 && x > LIM_IZQ + 1) {
+		if (getTempo() + getPaso() < clock()) {  
+			if (getDir() == -1 && getX() > LIM_IZQ + 1) {
 				borrar();
-				x--;
+				setX(getX()-1);
 				dibujar();
-			} else if (dir == 1 && x < LIM_DER - 3) {
+			} else if (getDir() == 1 && getX() < LIM_DER - 3) {
 				borrar();
-				x++;
+				setX(getX()+1);
 				dibujar();
 			}
-			tempo = clock();  
+			setTempo(clock());  
 		}
 	}
 };
 
-
+class Enemigo : public Nave {
+public:
+	Enemigo(int _x, int _y){
+		setX(_x);
+		setY(_y);
+	}
+	void dibujar(){
+		textcolor(GREEN);
+		gotoxy(getX(), getY());
+		cout << "{*}";
+	}
+};
 
 class Bala {
 	int x;
@@ -109,26 +149,29 @@ public:
 	}
 };
 
+
+
 int main() {
 	dibujarBordes();
-	Nave n1;
+	Jugador jugador;
+	Enemigo enemigo((LIM_IZQ + LIM_DER) / 2, LIM_SUP + 10);
 	Bala b1;
-	n1.dibujar();
-	
+	jugador.dibujar();
+	enemigo.dibujar();
 	while (true) {
 		
 		
 		if (kbhit()) {
 			int t = getch();
 			if (t == ' ') {
-				b1.disparar(n1.getX() + 1, n1.getY());
+				b1.disparar(jugador.getX() + 1, jugador.getY());
 			} else {
-				n1.procesarTecla(t);   
+				jugador.procesarTecla(t);   
 			}
 		}
 		
 	
-		n1.actualizarMovimiento();
+		jugador.actualizarMovimiento();
 		
 		b1.mover();
 	}
